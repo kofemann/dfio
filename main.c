@@ -71,8 +71,15 @@ char ** listDirectory(const char* path, int* out_count) {
                         freeDirectoryList(entries, count);
                         return NULL;
                     }
-                }   
-                entries[count] = strdup(dir->d_name);
+                }
+
+                entries[count] = malloc(strlen(path) + strlen(dir->d_name) + 2); // +2 for '/' and '\0'
+                if (entries[count] == NULL) {
+                    *out_count = -errno;
+                    freeDirectoryList(entries, count);
+                    return NULL;
+                }
+                sprintf(entries[count], "%s/%s", path, dir->d_name);
                 count++;
             }
         }

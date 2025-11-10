@@ -62,16 +62,15 @@ void stats_reduce_op(void *in, void *inout, int *len, MPI_Datatype *dptr) {
 */
 MPI_Datatype create_stats_type() {
   MPI_Datatype stats_type;
-  int blocklengths[3] = {4, 1, 0}; // 4 doubles, 1 int, padding
-  MPI_Aint displacements[3];
-  MPI_Datatype types[3] = {MPI_DOUBLE, MPI_INT, MPI_UB};
+  int blocklengths[2] = {4, 1}; // 4 doubles, 1 int, padding
+  MPI_Aint displacements[2];
+  MPI_Datatype types[2] = {MPI_DOUBLE, MPI_INT};
 
   // Calculate displacements
   displacements[0] = offsetof(stats_t, avg);
   displacements[1] = offsetof(stats_t, count);
-  displacements[2] = sizeof(stats_t);
 
-  MPI_Type_create_struct(3, blocklengths, displacements, types, &stats_type);
+  MPI_Type_create_struct(2, blocklengths, displacements, types, &stats_type);
   MPI_Type_commit(&stats_type);
 
   return stats_type;

@@ -39,7 +39,7 @@ void calculate_stats(double *array, int num_elements, stats_t *stats) {
  * Init stats with given rate. It initialized as with a single measurement,
  * as MPI call will update it with values from other nodes.
  */
-void init_stats(struct stats *stats, double rate) {
+void init_stats(stats_t *stats, double rate) {
     stats->min = stats->max = stats->avg = stats->sum = rate;
     stats->err = 0.;
     stats->count = 1;

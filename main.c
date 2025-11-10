@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/times.h>
 #include <getopt.h>
 #include <libgen.h>
 #include <errno.h>

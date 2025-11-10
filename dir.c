@@ -13,10 +13,13 @@
  * Free directory entries list.
  */
 void freeDirectoryList(char **entries, int count) {
-  for (int i = 0; i < count; i++) {
-    free(entries[i]);
+
+  if (entries) {
+    for (int i = 0; i < count; i++) {
+      free(entries[i]);
+    }
+    free(entries);
   }
-  free(entries);
 }
 
 /**
@@ -24,7 +27,6 @@ void freeDirectoryList(char **entries, int count) {
  */
 char **listDirectory(const char *path, int *out_count) {
 
-  DIR *d;
   struct dirent *dir;
   char **entries = NULL;
   int count = 0;
@@ -36,7 +38,7 @@ char **listDirectory(const char *path, int *out_count) {
     return NULL;
   }
 
-  d = opendir(path);
+  DIR *d = opendir(path);
   if (d) {
     while ((dir = readdir(d)) != NULL) {
       if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {

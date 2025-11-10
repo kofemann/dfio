@@ -126,6 +126,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "MPI_Finalize failed\n");
   }
 
+  free(rates);
   freeDirectoryList(dir_entries, files);
   return 0;
 }

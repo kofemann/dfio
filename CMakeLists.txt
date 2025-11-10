@@ -10,12 +10,12 @@ find_library(LIBM
 
 find_package(MPI)
 if (MPI_FOUND)
-  add_definitions("-DHAVE_MPI")
-  message (STATUS "MPI headers at ${MPI_C_INCLUDE_DIRS}")  
-  message (STATUS "MPI libs ${MPI_C_LIBRARIES}")  
-else()
-  message (STATUS "MPI is not defined. Building simple version")  
-endif()
+    add_definitions("-DHAVE_MPI")
+    message(STATUS "MPI headers at ${MPI_C_INCLUDE_DIRS}")
+    message(STATUS "MPI libs ${MPI_C_LIBRARIES}")
+else ()
+    message(STATUS "MPI is not defined. Building simple version")
+endif ()
 
 
 include_directories(${LIBM_INCLUDE_DIRS} ${MPI_C_INCLUDE_DIRS})

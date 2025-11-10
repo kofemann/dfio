@@ -20,5 +20,5 @@ endif()
 
 include_directories(${LIBM_INCLUDE_DIRS} ${MPI_C_INCLUDE_DIRS})
 
-add_executable(dfio main.c stats.c processor.c)
+add_executable(dfio main.c stats.c processor.c dir.c)
 target_link_libraries(dfio ${LIBM} ${MPI_C_LIBRARIES})

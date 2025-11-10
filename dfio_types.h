@@ -6,7 +6,6 @@
  * requests statistics record
  */
 typedef struct stats {
-    double sum;
     double avg;
     double min;
     double max;

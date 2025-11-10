@@ -12,15 +12,11 @@
 #include <libgen.h>
 #include <errno.h>
 #include <mpi.h>
+#include <math.h>
 
+#include "dfio.h"
 
-#include "dfio_types.h"
-
-#define OUT_FORMAT "%16s rate: total: %8.2f\t%8.2f rps \u00B1%8.2f, min: %8.2f, max: %8.2f, count: %8d\n"
-
-
-extern void processFiles(char ** entries, int rank, int count);
-
+#define OUT_FORMAT "%16s: agg: %.2f MB/s, per thread: %.2f MB/s \u00B1%.2f MB/s, min: %.2f MB/s, max: %.2f MB/s, total number of files: %d.\n"
 
 void usage(const char* progname, int exit_code) {
     printf("Distributed File I/O Benchmark\n");
@@ -32,69 +28,6 @@ void usage(const char* progname, int exit_code) {
     exit(exit_code);
 }
 
-
-void freeDirectoryList(char ** entries, int count) {
-    for (int i = 0; i < count; i++) {
-        free(entries[i]);
-    }
-    free(entries);
-}
-
-
-/**
- * List directory entries excluding . and ..
- */
-char ** listDirectory(const char* path, int* out_count) {
-
-    DIR *d;
-    struct dirent *dir;
-    char ** entries = NULL;
-    int count = 0;
-    int max_count = 128;
-
-    entries = malloc(sizeof(char*) * max_count);
-    if (entries == NULL) {
-        *out_count = -errno;
-        return NULL;
-    }
-
-    d = opendir(path);
-    if (d) {
-        while ((dir = readdir(d)) != NULL) {
-            if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
-                if (count >= max_count) {
-                    max_count *= 2;
-                    entries = realloc(entries, sizeof(char*) * max_count);
-                    if (entries == NULL) {
-                        *out_count = -errno;
-                        freeDirectoryList(entries, count);
-                        return NULL;
-                    }
-                }
-
-                entries[count] = malloc(strlen(path) + strlen(dir->d_name) + 2); // +2 for '/' and '\0'
-                if (entries[count] == NULL) {
-                    *out_count = -errno;
-                    freeDirectoryList(entries, count);
-                    return NULL;
-                }
-                sprintf(entries[count], "%s/%s", path, dir->d_name);
-                count++;
-            }
-        }
-
-        closedir(d);
-    } else {
-        *out_count = -errno;
-        free(entries);
-        return NULL;
-    }
-
-    *out_count = count;
-    return entries;
-}
-
-
 int main(int argc, char *argv[]) {
 
 
@@ -103,13 +36,13 @@ int main(int argc, char *argv[]) {
     int rc = 1;
     int res;
     int c;
-    int pid;
     double rate;
     stats_t stats;
 
     double *rates = NULL;
 
-    // in case of MPI it will be reassigned
+    stats_t global = {0};
+
     int community_size;
     int rank;
 
@@ -169,10 +102,24 @@ int main(int argc, char *argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-
-    processFiles(dir_entries, rank, per_runk_chunk);
+    stats = processFiles(dir_entries, rank, per_runk_chunk);
 
     MPI_Barrier(MPI_COMM_WORLD);
+
+
+    rates = malloc(sizeof(double) * community_size);
+    if (rates == NULL) {
+        fprintf(stderr, "Rank %d failed to allocate rates array: %s\n", rank, strerror(errno));
+        freeDirectoryList(dir_entries, files);
+        exit(3);
+    }
+
+    collect_stats(&stats, &global, MPI_COMM_WORLD, rank, community_size);
+
+    if (rank == 0) {
+        fprintf(stdout, OUT_FORMAT, "Read", global.avg*community_size, global.avg, global.err, global.min, global.max, global.count);
+    }
+    
     res = MPI_Finalize();
     if (res != MPI_SUCCESS) {
         fprintf (stderr, "MPI_Finalize failed\n");
